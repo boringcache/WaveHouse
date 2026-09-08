@@ -36,9 +36,14 @@ through all five commits. Repeating the cold workflow in that namespace is a
 warm repeat and must not be reported as a new cold sample. The second rolling
 commit changes a dependency; GitHub's immutable key creates a new archive there.
 
-BoringCache uses GitHub OIDC with `id-token: write`. The workspace connection
-must trust this fork, the validation branch, and both workflow files. Cold and
-commit jobs publish; warm jobs restore only. No static cache token is required.
+BoringCache uses GitHub OIDC with `id-token: write`. First dispatch
+`BoringCache validation` with `connect=true`. That job runs only on
+`boringcache/WaveHouse` at `boringcache-validation`, requests browser approval,
+and skips the measured workloads. Approve the connection to
+`boringcache/wavehouse` with publishing limited to the validation branch. The
+workspace connection must trust this fork, the validation branch, and both
+workflow files. Then dispatch with the default `connect=false`. Cold and commit
+jobs publish; warm jobs restore only. No static cache token is required.
 
 Artifacts retain workload timing, source identity, and the Action evidence
 available before job cleanup. Final cache publication and proxy diagnostics
