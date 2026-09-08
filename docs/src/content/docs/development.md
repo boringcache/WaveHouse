@@ -761,3 +761,9 @@ Follow the checklist in `AGENTS.md` §"Common Tasks / Adding a new internal pack
 2. Add the path → label mapping to `.github/labeler.yml` so PRs touching the new package get auto-labeled.
 
 Step 2 is the one that automates anything — PR labeling is path-based. Step 1's label is applied by hand during issue triage.
+
+## Fork cache validation
+
+The `boringcache-validation` branch has an optional Go cache comparison.
+See [the validation procedure](https://github.com/boringcache/WaveHouse/blob/boringcache-validation/.github/boringcache-validation.md) for
+the measured cases, source sequence, authentication, and evidence limits.

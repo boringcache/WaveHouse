@@ -87,3 +87,6 @@ pnpm-debug.log*
 
 # local config files
 .config.local.yaml
+
+# Local cache validation outputs
+.validation/

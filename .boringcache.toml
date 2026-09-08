@@ -1,0 +1,13 @@
+workspace = "boringcache/wavehouse"
+
+[adapters.go]
+tag = "validation-20260908-unit"
+no-git = true
+command = ["make", "test-unit", "COV_DEFER=1"]
+
+[entries.go-modules]
+path = ".validation/go-modules"
+tag = "validation-20260908-modules"
+
+[profiles.modules]
+entries = ["go-modules"]

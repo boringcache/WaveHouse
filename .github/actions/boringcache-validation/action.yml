@@ -1,0 +1,91 @@
+name: Validate WaveHouse caching
+description: Compare one Go cache surface on the checked-out upstream revision.
+inputs:
+  provider:
+    description: GitHub or BoringCache
+    required: true
+  cache-case:
+    description: unit or modules
+    required: true
+  phase:
+    description: cold, warm, or commit
+    required: true
+  cli-version:
+    description: Optional exact BoringCache CLI release or prerelease tag
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Record source and isolate local cache directories
+      shell: bash
+      env:
+        CACHE_CASE: ${{ inputs.cache-case }}
+      run: |
+        mkdir -p .validation/results
+        git merge-base HEAD origin/main > .validation/results/source.txt
+        git rev-parse HEAD > .validation/results/validation-commit.txt
+        echo "GOCACHE=$GITHUB_WORKSPACE/.validation/go-build" >> "$GITHUB_ENV"
+        echo "GOMODCACHE=$GITHUB_WORKSPACE/.validation/go-modules" >> "$GITHUB_ENV"
+        echo "case=$CACHE_CASE" >> "$GITHUB_STEP_SUMMARY"
+    - name: Set up the declared Go toolchain
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+      with:
+        go-version-file: go.mod
+        cache: false
+    - name: Record toolchain
+      shell: bash
+      run: go version | tee .validation/results/go-version.txt
+    - name: Restore GitHub cache for cold or commit build
+      if: inputs.provider == 'GitHub' && inputs.phase != 'warm'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ inputs.cache-case == 'modules' && env.GOMODCACHE || env.GOCACHE }}
+        key: validation-20260908-${{ runner.os }}-${{ inputs.cache-case }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
+        restore-keys: validation-20260908-${{ runner.os }}-${{ inputs.cache-case }}-
+    - name: Restore the exact GitHub cache for warm build
+      if: inputs.provider == 'GitHub' && inputs.phase == 'warm'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ inputs.cache-case == 'modules' && env.GOMODCACHE || env.GOCACHE }}
+        key: validation-20260908-${{ runner.os }}-${{ inputs.cache-case }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
+        fail-on-cache-miss: true
+    - name: Configure BoringCache Go compiler storage
+      if: inputs.provider == 'BoringCache' && inputs.cache-case == 'unit'
+      id: compiler-cache
+      uses: boringcache/one@e4ead12dabc993eba201c402a82e396166dade03 # v1.20.4
+      with:
+        cli-version: ${{ inputs.cli-version }}
+        mode: go
+        trust-policy: ${{ inputs.phase == 'warm' && 'restore' || 'publish' }}
+        fail-on-cache-error: true
+        fail-on-cache-miss: ${{ inputs.phase == 'warm' }}
+        diagnostics: summary
+    - name: Configure BoringCache module archive
+      if: inputs.provider == 'BoringCache' && inputs.cache-case == 'modules'
+      id: module-cache
+      uses: boringcache/one@e4ead12dabc993eba201c402a82e396166dade03 # v1.20.4
+      with:
+        cli-version: ${{ inputs.cli-version }}
+        mode: archive
+        cache-profiles: modules
+        trust-policy: ${{ inputs.phase == 'warm' && 'restore' || 'publish' }}
+        fail-on-cache-error: true
+        fail-on-cache-miss: ${{ inputs.phase == 'warm' }}
+        diagnostics: summary
+    - name: Download the declared module graph
+      shell: bash
+      run: /usr/bin/time -v -o .validation/results/modules-time.txt go mod download
+    - name: Run Go unit tests with race and coverage instrumentation
+      if: inputs.cache-case == 'unit'
+      shell: bash
+      run: /usr/bin/time -v -o .validation/results/unit-time.txt make test-unit COV_DEFER=1
+    - name: Retain source, timing, and available Action evidence
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ inputs.provider }}-${{ inputs.cache-case }}-${{ inputs.phase }}
+        path: |
+          .validation/results/
+          ${{ steps.compiler-cache.outputs.evidence-path }}
+          ${{ steps.module-cache.outputs.evidence-path }}
+        if-no-files-found: error

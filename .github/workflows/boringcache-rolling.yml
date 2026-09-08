@@ -1,0 +1,37 @@
+name: BoringCache rolling validation
+run-name: WaveHouse commit build at ${{ github.sha }}
+on:
+  workflow_dispatch:
+    inputs:
+      cli_version:
+        description: Optional exact BoringCache CLI release or prerelease tag
+        required: false
+        default: ""
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: wavehouse-boringcache-validation
+  cancel-in-progress: false
+jobs:
+  commit:
+    name: ${{ matrix.provider }} ${{ matrix.cache-case }} commit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [GitHub, BoringCache]
+        cache-case: [unit, modules]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/boringcache-validation
+        with:
+          provider: ${{ matrix.provider }}
+          cache-case: ${{ matrix.cache-case }}
+          phase: commit
+          cli-version: ${{ inputs.cli_version }}
