@@ -84,6 +84,7 @@ runs:
       uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.provider }}-${{ inputs.cache-case }}-${{ inputs.phase }}
+        include-hidden-files: true
         path: |
           .validation/results/
           ${{ steps.compiler-cache.outputs.evidence-path }}
