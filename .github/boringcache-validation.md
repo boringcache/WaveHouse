@@ -5,7 +5,9 @@ The `boringcache-validation` branch starts at upstream commit
 `f72c8c6f37c88d0a44b4317d2cc905aeb694104f` on September 8, 2026.
 
 Run `BoringCache validation` once for the initial cold and fresh-runner warm
-comparison. Then merge each of these upstream commits in order and run
+comparison. Then apply each of these upstream commits in order with
+`git cherry-pick --no-commit`, update `.github/boringcache-source` to that
+upstream SHA, and commit both changes together with a signed commit. Run
 `BoringCache rolling validation` after each push:
 
 1. `4f4204e2860143bd3c3fa1ea053550e9fd5cf66d`
@@ -16,7 +18,9 @@ comparison. Then merge each of these upstream commits in order and run
 
 Both providers use Ubuntu 24.04, the Go version declared in `go.mod`, identical
 source, and fresh local cache directories. The fork's `main` branch preserves
-the upstream tip above; artifacts record the merge base with that snapshot.
+the upstream tip above. Artifacts record the committed upstream source pin;
+the workflow checks that Go inputs, Makefile, and workload directories match
+that original revision. The validation branch uses linear commits.
 Both providers install the declared toolchain through `actions/setup-go`;
 upstream relies on the runner's Go and `GOTOOLCHAIN=auto`. The compared module
 archive totals therefore exclude any Go toolchain downloaded into upstream's

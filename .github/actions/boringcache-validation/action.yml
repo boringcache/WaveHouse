@@ -22,7 +22,10 @@ runs:
         CACHE_CASE: ${{ inputs.cache-case }}
       run: |
         mkdir -p .validation/results
-        git merge-base HEAD origin/main > .validation/results/source.txt
+        source_sha="$(cat .github/boringcache-source)"
+        git cat-file -e "$source_sha^{commit}"
+        git diff --exit-code "$source_sha" -- go.mod go.sum Makefile cmd internal scripts tests clients
+        echo "$source_sha" > .validation/results/source.txt
         git rev-parse HEAD > .validation/results/validation-commit.txt
         echo "GOCACHE=$GITHUB_WORKSPACE/.validation/go-build" >> "$GITHUB_ENV"
         echo "GOMODCACHE=$GITHUB_WORKSPACE/.validation/go-modules" >> "$GITHUB_ENV"
