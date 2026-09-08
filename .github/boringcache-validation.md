@@ -17,6 +17,10 @@ comparison. Then merge each of these upstream commits in order and run
 Both providers use Ubuntu 24.04, the Go version declared in `go.mod`, identical
 source, and fresh local cache directories. The fork's `main` branch preserves
 the upstream tip above; artifacts record the merge base with that snapshot.
+Both providers install the declared toolchain through `actions/setup-go`;
+upstream relies on the runner's Go and `GOTOOLCHAIN=auto`. The compared module
+archive totals therefore exclude any Go toolchain downloaded into upstream's
+module directory.
 
 The cases measure separate storage:
 
