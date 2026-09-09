@@ -764,6 +764,4 @@ Step 2 is the one that automates anything — PR labeling is path-based. Step 1'
 
 ## Fork cache validation
 
-The `boringcache-validation` branch has an optional Go cache comparison.
-See [the validation procedure](https://github.com/boringcache/WaveHouse/blob/boringcache-validation/.github/boringcache-validation.md) for
-the measured cases, source sequence, authentication, and evidence limits.
+The `boringcache-validation` branch has an optional Go cache comparison. See [the validation procedure](https://github.com/boringcache/WaveHouse/blob/boringcache-validation/.github/boringcache-validation.md) for the measured cases, source sequence, authentication, and evidence limits.
